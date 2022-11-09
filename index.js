@@ -17,6 +17,7 @@ async function run(){
     try{
        const serviceCollection = client.db('database').collection('service');
        const userAddCollection = client.db('database').collection('add');
+       const userReviewCollection = client.db('database').collection('review');
         //find 3 element from database
         app.get('/', async(req,res)=>{
             const query ={};
@@ -27,7 +28,7 @@ async function run(){
         // find user add service
         app.get('/addService/:uid', async(req,res)=>{
             const uid = req.params.uid;
-            console.log(uid)
+            // console.log(uid)
             const query ={uid: uid};
             const cursor = userAddCollection.find(query);
             const result = await cursor.toArray();
@@ -38,7 +39,7 @@ async function run(){
             const query ={};
             const cursor = serviceCollection.find(query);
             const result = await cursor.toArray();
-            console.log(result)
+            // console.log(result)
             res.send(result) 
         })
         // find specific id info
@@ -66,6 +67,39 @@ async function run(){
           const result = await userAddCollection.updateOne(filter, updateDoc, options);
           res.send(result)
         })
+
+        // post review 
+        app.post('/review' , async(req,res)=>{
+            const user = req.body;
+            // console.log(user)
+            const result = await userReviewCollection.insertOne(user);
+            res.send(result)
+           })
+           //find all reviews from database
+        app.get('/review', async(req,res)=>{
+            const query ={};
+            const cursor = userReviewCollection.find(query);
+            const result = await cursor.toArray();
+            // console.log(result)
+            res.send(result) 
+        })
+
+         // find specific user review info
+         app.get('/review/:uid', async(req,res)=>{
+            const uid = req.params.uid;
+            console.log(uid)
+            const query ={uid: uid};
+            const cursor = userReviewCollection.find(query);
+            const result = await cursor.toArray();
+            res.send(result) 
+        })
+        // delete review
+        app.post('/review/delete' , async(req,res)=>{
+            const query = req.body;
+            console.log(query)
+            const result = await userReviewCollection.deleteOne(query);
+            res.send(result)
+           })
     }
     catch{
         (err => console.log(err))
