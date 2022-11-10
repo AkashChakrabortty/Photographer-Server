@@ -1,9 +1,16 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
+const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { json } = require('express');
 const app = express();
 const port = process.env.PORT || 5000;
+
+// create random json token secret
+// terminal 'node' command the
+// require('crypto').randomBytes(64).toString('hex')
+// hide secret .env
 
 // middle wares
 app.use(cors());
@@ -13,11 +20,37 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@clu
 
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
+// verifyjwt
+function verifyJWT(req, res, next){
+    const authHeader = req.headers.authorization;
+
+    if(!authHeader){
+        return res.status(401).send({message: 'unauthorized access'});
+    }
+    const token = authHeader.split(' ')[1];
+
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function(err, decoded){
+        if(err){
+            return res.status(403).send({message: 'Forbidden access'});
+        }
+        req.decoded = decoded;
+        next();
+    })
+}
+
 async function run(){
     try{
        const serviceCollection = client.db('database').collection('service');
        const userAddCollection = client.db('database').collection('add');
        const userReviewCollection = client.db('database').collection('review');
+
+       //  jwt
+        app.post('/jwt', (req, res) =>{
+        const user = req.body;
+        // console.log(user)
+        const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1d'})
+        res.send({token})
+    })  
         //find 3 element from database
         app.get('/', async(req,res)=>{
             const query ={};
@@ -86,9 +119,17 @@ async function run(){
         })
 
          // find specific user review info
-         app.get('/review/:uid', async(req,res)=>{
+         app.get('/review/:uid', verifyJWT , async(req,res)=>{
+            const decoded = req.decoded;
             const uid = req.params.uid;
-            // console.log(uid)
+            
+            if(decoded.uid !== uid){
+                res.status(403).send({message: 'unauthorized access'})
+            }
+
+
+           
+            // console.log(req.headers)
             const query ={uid: uid};
             const cursor = userReviewCollection.find(query);
             const result = await cursor.toArray();
@@ -105,6 +146,31 @@ async function run(){
             const result = await userReviewCollection.deleteOne(query);
             res.send(result)
            }) 
+          //    find specific edit review
+           app.get('/reviews/:id', async(req,res)=>{
+            const id = req.params.id;
+            console.log(id)
+            const query = {_id: ObjectId(id) };
+            const service = await userReviewCollection.findOne(query);
+            res.send(service)
+        })
+        // update review
+        app.put('/reviews/edit/:id', async(req,res)=>{
+            const id = req.params.id;
+            console.log(id)
+            const filter = { _id: ObjectId(id) };
+            const updateReview = req.body;
+            console.log(updateReview)
+            console.log(updateReview.text)
+            const options = { upsert: true };
+            const updateDoc = {
+               $set: {
+                  text: updateReview.text
+               },
+             };
+             const result = await userReviewCollection.updateOne(filter, updateDoc, options);
+             res.send(result)
+        } )
     }
     catch{
         (err => console.log(err))
