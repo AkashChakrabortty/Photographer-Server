@@ -7,10 +7,6 @@ const { json } = require('express');
 const app = express();
 const port = process.env.PORT || 5000;
 
-// create random json token secret
-// terminal 'node' command the
-// require('crypto').randomBytes(64).toString('hex')
-// hide secret .env
 
 // middle wares
 app.use(cors());
@@ -47,7 +43,6 @@ async function run(){
        //  jwt
         app.post('/jwt', (req, res) =>{
         const user = req.body;
-        // console.log(user)
         const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1d'})
         res.send({token})
     })  
@@ -61,7 +56,6 @@ async function run(){
         // find user add service
         app.get('/addService/:uid', async(req,res)=>{
             const uid = req.params.uid;
-            // console.log(uid)
             const query ={uid: uid};
             const cursor = userAddCollection.find(query);
             const result = await cursor.toArray();
@@ -72,7 +66,6 @@ async function run(){
             const query ={};
             const cursor = serviceCollection.find(query);
             const result = await cursor.toArray();
-            // console.log(result)
             res.send(result) 
         })
         // find specific id info
@@ -104,7 +97,6 @@ async function run(){
         // post review 
         app.post('/review' , async(req,res)=>{
             const user = req.body;
-            // console.log(user)
             const result = await userReviewCollection.insertOne(user);
             res.send(result)
            })
@@ -114,7 +106,6 @@ async function run(){
             const sortPattern = { milliseconds : -1 };
             const cursor = userReviewCollection.find(query).sort(sortPattern);
             const result = await cursor.toArray();
-            // console.log(result)
             res.send(result) 
         })
 
@@ -126,10 +117,7 @@ async function run(){
             if(decoded.uid !== uid){
                 res.status(403).send({message: 'unauthorized access'})
             }
-
-
-           
-            // console.log(req.headers)
+         
             const query ={uid: uid};
             const cursor = userReviewCollection.find(query);
             const result = await cursor.toArray();
@@ -137,10 +125,7 @@ async function run(){
         })
         // delete review
         app.delete('/review/delete' , async(req,res)=>{
-            // const uid = req.query.uid;
-            // const serviceId = req.query.serviceId;
             const useridServiceid = req.query.id;
-            // const query = req.body;
             console.log(useridServiceid)
             const query = { _id: ObjectId(useridServiceid) };
             const result = await userReviewCollection.deleteOne(query);
@@ -149,7 +134,6 @@ async function run(){
           //    find specific edit review
            app.get('/reviews/:id', async(req,res)=>{
             const id = req.params.id;
-            console.log(id)
             const query = {_id: ObjectId(id) };
             const service = await userReviewCollection.findOne(query);
             res.send(service)
@@ -157,11 +141,8 @@ async function run(){
         // update review
         app.put('/reviews/edit/:id', async(req,res)=>{
             const id = req.params.id;
-            console.log(id)
             const filter = { _id: ObjectId(id) };
             const updateReview = req.body;
-            console.log(updateReview)
-            console.log(updateReview.text)
             const options = { upsert: true };
             const updateDoc = {
                $set: {
