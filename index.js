@@ -78,7 +78,8 @@ async function run(){
            //find all reviews from database
         app.get('/review', async(req,res)=>{
             const query ={};
-            const cursor = userReviewCollection.find(query);
+            const sortPattern = { milliseconds : -1 };
+            const cursor = userReviewCollection.find(query).sort(sortPattern);
             const result = await cursor.toArray();
             // console.log(result)
             res.send(result) 
