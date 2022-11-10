@@ -88,19 +88,23 @@ async function run(){
          // find specific user review info
          app.get('/review/:uid', async(req,res)=>{
             const uid = req.params.uid;
-            console.log(uid)
+            // console.log(uid)
             const query ={uid: uid};
             const cursor = userReviewCollection.find(query);
             const result = await cursor.toArray();
             res.send(result) 
         })
         // delete review
-        app.post('/review/delete' , async(req,res)=>{
-            const query = req.body;
-            console.log(query)
+        app.delete('/review/delete' , async(req,res)=>{
+            // const uid = req.query.uid;
+            // const serviceId = req.query.serviceId;
+            const useridServiceid = req.query.id;
+            // const query = req.body;
+            console.log(useridServiceid)
+            const query = { _id: ObjectId(useridServiceid) };
             const result = await userReviewCollection.deleteOne(query);
             res.send(result)
-           })
+           }) 
     }
     catch{
         (err => console.log(err))
